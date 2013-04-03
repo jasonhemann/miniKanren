@@ -13,9 +13,6 @@
 
 (load "mk.scm")
 
-(printf "mk-tests\n")
-(load "mk-tests.ss")
-
 (printf "==-tests\n")
 (load "==-tests.ss")
 
