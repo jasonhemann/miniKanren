@@ -25,6 +25,9 @@
 (printf "symbolo-numbero-tests\n")
 (load "symbolo-numbero-tests.ss")
 
+(printf "not-pairo-tests\n")
+(load "not-pairo-tests.ss")
+
 (printf "disequality-tests\n")
 (load "disequality-tests.ss")
 
