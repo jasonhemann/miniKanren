@@ -83,9 +83,17 @@
   (run 1 (q) (fresh (x) (symbolo q) (== x q)) (not-pairo q))
   '((_.0 (sym _.0))))
 
+(test-check "not-pairo 11b"
+  (run 1 (q) (fresh (x) (numbero q) (== x q)) (not-pairo q))
+  '((_.0 (num _.0))))
+
 (test-check "not-pairo 12"
   (run 1 (q) (fresh (x) (not-pairo q) (== x q)) (symbolo q))
   '((_.0 (sym _.0))))
+
+(test-check "not-pairo 12b"
+  (run 1 (q) (fresh (x) (not-pairo q) (== x q)) (numbero q))
+  '((_.0 (num _.0))))
 
 (test-check "not-pairo 13"
   (run 1 (q) (not-pairo #f))

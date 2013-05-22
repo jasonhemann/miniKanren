@@ -603,7 +603,7 @@
         ((ground-non-symbol? u H) (mzero))
         ((mem-check u N H) (mzero))
         ((mem-check u A H)
-         (unit (State H D `(,u . ,Y) N (remq1 u A) T)))
+         (unit (State H D `(,u . ,Y) N A T)))
         (else (unit (State H D `(,u . ,Y) N A T)))))))
  
 (define numbero 
@@ -613,7 +613,7 @@
         ((ground-non-number? u H) (mzero))
         ((mem-check u Y H) (mzero))
         ((mem-check u A H)
-         (unit (State H D Y `(,u . ,N) (remq1 u a) T)))
+         (unit (State H D Y `(,u . ,N) A T)))
         (else (unit (State H D Y `(,u . ,N) A T)))))))
 
 (define not-pairo
