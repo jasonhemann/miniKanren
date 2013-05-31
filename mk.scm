@@ -569,12 +569,24 @@
              (mem-check u (car t) H)
              (mem-check u (cdr t) H)))
         (else (term=? u t H))))))
- 
+
 (define term=?
-  (lambda (u t H)
+  (lambda (u v H)
+    (let ((u (walk u H))
+          (v (walk v H)))
+      (cond
+        ((and (pair? u) (pair? v))
+         (and (term=? (car u) (car v) H)
+              (term=? (cdr u) (cdr v) H)))
+        (else (term=?-nonpair u v H))))))
+
+(define term=?-nonpair
+  (lambda (u v H)
     (cond
-      ((unify u t H) =>
-       (lambda (H0) (eq? H0 H)))
+      ((eq? u v) #t)
+      ((var? u) #f)
+      ((var? v) #f)
+      ((equal? u v) #t)
       (else #f))))
 
 (define ground-non-type?
@@ -602,8 +614,6 @@
       (cond
         ((ground-non-symbol? u H) (mzero))
         ((mem-check u N H) (mzero))
-        ((mem-check u A H)
-         (unit (State H D `(,u . ,Y) N A T)))
         (else (unit (State H D `(,u . ,Y) N A T)))))))
  
 (define numbero 
@@ -612,8 +622,6 @@
       (cond
         ((ground-non-number? u H) (mzero))
         ((mem-check u Y H) (mzero))
-        ((mem-check u A H)
-         (unit (State H D Y `(,u . ,N) A T)))
         (else (unit (State H D Y `(,u . ,N) A T)))))))
 
 (define not-pairo
