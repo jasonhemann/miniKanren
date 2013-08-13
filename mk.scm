@@ -152,11 +152,11 @@
                 (Y (walk* (c->Y c) H)) 
                 (N (walk* (c->N c) H))
                 (A (walk* (c->A c) H))
-                (T (walk* (c->T c) H)))
-          (let ((v (walk* x H)))
+                (T (walk* (c->T c) H))
+                (v (walk* x H)))
             (let ((R (reify-R v '())))
               (reify+
-                v R c H D Y N A T)))))))))
+               v R c H D Y N A T))))))))
  
 (define reify+
   (lambda (v R c H D Y N A T)
