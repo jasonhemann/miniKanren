@@ -257,7 +257,7 @@
 
 (define sorter
   (lambda (ls)
-    (sort lex<=? ls)))
+    (list-sort lex<=? ls)))
  
 (define sort-D
   (lambda (D)
@@ -266,7 +266,7 @@
  
 (define sort-d
   (lambda (d)
-    (sort
+    (list-sort
       (lambda (x y)
         (lex<=? (car x) (car y)))
       (map sort-pr d))))
