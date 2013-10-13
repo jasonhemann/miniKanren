@@ -18,12 +18,12 @@
 ;; There may be many answers, and each answer has to be reified.
 
 ;; We have just added not-pairo to the system.  It appears to be working
-;; and passes our test cases. It's field is called A.
+;; and passes our test cases. It's field is called Np.
 
 (define rhs
   (lambda (pr)
     (cdr pr)))
- 
+
 (define lhs
   (lambda (pr)
     (car pr)))
@@ -40,73 +40,73 @@
 (define var
   (lambda (dummy)
     (vector dummy)))
- 
+
 (define var?
   (lambda (x)
     (vector? x)))
 
 (define walk
-  (lambda (u H)
+  (lambda (u S)
     (cond
-      ((and (var? u) (assq u H)) =>
-       (lambda (pr) (walk (rhs pr) H)))
+      ((and (var? u) (assq u S)) =>
+       (lambda (pr) (walk (rhs pr) S)))
       (else u))))
 
 (define unify
-  (lambda (u v H)
-    (let ((u (walk u H))
-          (v (walk v H)))
+  (lambda (u v S)
+    (let ((u (walk u S))
+          (v (walk v S)))
       (cond
         ((and (pair? u) (pair? v))
-         (let ((H (unify (car u) (car v) H)))
-           (and H
-             (unify (cdr u) (cdr v) H))))
-        (else (unify-nonpair u v H))))))
- 
+         (let ((S (unify (car u) (car v) S)))
+           (and S
+             (unify (cdr u) (cdr v) S))))
+        (else (unify-nonpair u v S))))))
+
 (define unify-nonpair
-  (lambda (u v H)
+  (lambda (u v S)
     (cond
-      ((eq? u v) H)
-      ((var? u) (ext-H-check u v H))
-      ((var? v) (ext-H-check v u H))
-      ((equal? u v) H)
+      ((eq? u v) S)
+      ((var? u) (ext-S-check u v S))
+      ((var? v) (ext-S-check v u S))
+      ((equal? u v) S)
       (else #f))))
 
-(define ext-H-check
-  (lambda (x v H)
+(define ext-S-check
+  (lambda (x v S)
     (case-value v
-      ((v) (ext-H x v H))
+      ((v) (ext-S x v S))
       ((au du) (cond
-                 ((occurs-check x v H) #f)
-                 (else (ext-H x v H))))
-      ((v) (ext-H x v H)))))
- 
-(define ext-H
-  (lambda (x v H)
-    (cons `(,x . ,v) H)))
-     
+                 ((occurs-check x v S) #f)
+                 (else (ext-S x v S))))
+      ((v) (ext-S x v S)))))
+
+(define ext-S
+  (lambda (x v S)
+    (cons `(,x . ,v) S)))
+
 (define occurs-check
-  (lambda (x v H)
-    (case-value (walk v H)
+  (lambda (x v S)
+    (case-value (walk v S)
       ((v) (eq? v x))
       ((av dv)
-       (or (occurs-check x av H)
-           (occurs-check x dv H)))
+       (or (occurs-check x av S)
+           (occurs-check x dv S)))
       ((v) #f))))
 
-(define prefix-H
-  (lambda (H0 H)
+(define prefix-S
+  (lambda (S0 S)
     (cond
-      ((eq? H0 H) '())
-      (else (cons (car H0)
-              (prefix-H (cdr H0) H))))))
+      ((eq? S0 S) '())
+      (else (cons (car S0)
+              (prefix-S (cdr S0) S))))))
 
 (define walk*
-  (lambda (v H)
-    (case-value (walk v H)
+  (lambda (v S)
+    (case-value (walk v S)
       ((v) v)
       ((av dv)
-       (cons (walk* av H) (walk* dv H)))
+       (cons (walk* av S) (walk* dv S)))
       ((v) v))))
 
 (define reify-R
@@ -114,29 +114,29 @@
     (case-value (walk v R)
       ((v) (let ((n (length R)))
              (let ((name (reify-name n)))
-               (ext-H v name R))))
+               (ext-S v name R))))
       ((av dv) (let ((R (reify-R av R)))
                  (reify-R dv R)))
       ((v) R))))
 
 (define unify-safe
-  (lambda (u v H)
-    (let ((u (walk u H))
-          (v (walk v H)))
+  (lambda (u v S)
+    (let ((u (walk u S))
+          (v (walk v S)))
       (cond
         ((and (pair? u) (pair? v))
-         (let ((H (unify-safe (car u) (car v) H)))
-           (and H
-             (unify-safe (cdr u) (cdr v) H))))
-        (else (unify-nonpair-safe u v H))))))
-  
+         (let ((S (unify-safe (car u) (car v) S)))
+           (and S
+             (unify-safe (cdr u) (cdr v) S))))
+        (else (unify-nonpair-safe u v S))))))
+
 (define unify-nonpair-safe
-  (lambda (u v H)
+  (lambda (u v S)
     (cond
-      ((eq? u v) H)
-      ((var? u) (ext-H u v H))
-      ((var? v) (ext-H v u H))
-      (else H))))
+      ((eq? u v) S)
+      ((var? u) (ext-S u v S))
+      ((var? v) (ext-S v u S))
+      (else S))))
 
 (define reify-name
   (lambda (n)
@@ -147,65 +147,65 @@
   (lambda (x)
     (lambda (c)
       (let ((c (cycle c)))
-        (let ((H (c->H c)))
-          (let ((D (walk* (c->D c) H))
-                (Y (walk* (c->Y c) H)) 
-                (N (walk* (c->N c) H))
-                (A (walk* (c->A c) H))
-                (T (walk* (c->T c) H))
-                (v (walk* x H)))
+        (let ((S (c->S c)))
+          (let ((D (walk* (c->D c) S))
+                (Y (walk* (c->Y c) S))
+                (N (walk* (c->N c) S))
+                (Np (walk* (c->Np c) S))
+                (A (walk* (c->A c) S))
+                (v (walk* x S)))
             (let ((R (reify-R v '())))
               (reify+
-               v R c H D Y N A T))))))))
- 
+               v R c S D Y N Np A))))))))
+
 (define reify+
-  (lambda (v R c H D Y N A T)
+  (lambda (v R c S D Y N Np A)
     (reify++ v R
       (D-subsumed
        (remp
-          (lambda (d) 
-            (anyvar? (walk* d H) R))
-          (drop-from-D-using-T H
+          (lambda (d)
+            (anyvar? (walk* d S) R))
+          (drop-from-D-using-A S
             (c->Y c) (c->N c)
-	    (c->A c) (c->T c)
-            (rem-xx-from-D D H)))) 
+	    (c->Np c) (c->A c)
+            (rem-xx-from-D D S))))
       (remp (lambda (y) (anyvar? y R))
         Y)
       (remp (lambda (n) (anyvar? n R))
         N)
+      (remp (lambda (np) (anyvar? np R))
+        Np)
       (remp (lambda (a) (anyvar? a R))
-        A)
-      (remp (lambda (t) (anyvar? t R))
-        T))))
- 
+        A))))
+
 (define reify++
-  (lambda (v R D Y N A T)
+  (lambda (v R D Y N Np A)
     (form (walk* v R) (walk* D R)
           (walk* Y R) (walk* N R)
-          (walk* A R) (T-subsumed (walk* T R)))))
- 
+          (walk* Np R) (A-subsumed (walk* A R)))))
+
 (define form
-  (lambda (v D Y N A T)
+  (lambda (v D Y N Np A)
     (let ((fd (sort-D D))
           (fy (sorter Y))
           (fn (sorter N))
-          (fa (sorter A))
-          (ft (sorter T)))
+          (fnp (sorter Np))
+          (fa (sorter A)))
       (let ((fd (if (null? fd) fd
                     (let ((fd (drop-dot-D fd)))
                       `((=/= . ,fd)))))
             (fy (if (null? fy) fy `((sym . ,fy))))
             (fn (if (null? fn) fn `((num . ,fn))))
-            (fa (if (null? fa) fa `((not-pair . ,fa))))
-            (ft (if (null? ft) ft
-                    (let ((ft (drop-dot ft)))
-                      `((absento . ,ft))))))
+            (fnp (if (null? fnp) fnp `((not-pair . ,fnp))))
+            (fa (if (null? fa) fa
+                    (let ((fa (drop-dot fa)))
+                      `((absento . ,fa))))))
         (cond
           ((and (null? fd) (null? fy)
-                (null? fn) (null? fa)
-                (null? ft))
+                (null? fn) (null? fnp)
+                (null? fa))
            v)
-          (else (append `(,v) fd fa fn fy ft)))))))
+          (else (append `(,v) fd fnp fn fy fa)))))))
 
 (define lex<=?
   (lambda (x y)
@@ -248,7 +248,7 @@
       ((pair? x)
        (cond
          ((pair? y)
-          (cond          
+          (cond
             ((equal? (car x) (car y))
              (lex<=? (cdr x) (cdr y)))
             (else (lex<=? (car x) (car y)))))))
@@ -258,19 +258,19 @@
 (define sorter
   (lambda (ls)
     (list-sort lex<=? ls)))
- 
+
 (define sort-D
   (lambda (D)
     (sorter
       (map sort-d D))))
- 
+
 (define sort-d
   (lambda (d)
     (list-sort
       (lambda (x y)
         (lex<=? (car x) (car y)))
       (map sort-pr d))))
- 
+
 (define drop-dot
   (lambda (X)
     (map (lambda (t)
@@ -278,22 +278,22 @@
                  (d (rhs t)))
              `(,a ,d)))
          X)))
-          
+
 (define datum->string
   (lambda (x)
     (call-with-string-output-port
-      (lambda (p) (display x p)))))         
- 
+      (lambda (p) (display x p)))))
+
 (define drop-dot-D
   (lambda (D)
     (map drop-dot D)))
- 
+
 (define lex<-reified-name?
   (lambda (r)
     (char<?
       (string-ref (datum->string r) 0)
       (string-ref "_" 0))))
-               
+
 (define sort-pr
   (lambda (pr)
     (let ((l (lhs pr))
@@ -304,67 +304,70 @@
         (else pr)))))
 
 (define rem-xx-from-D
-  (lambda (D H)
-    (remp not
-      (map (lambda (d)
-             (let ((d-l (lhs d))
-                   (d-r (rhs d)))
-	       (let ((H0 (unify-safe d-l d-r H)))
-		 (prefix-H H0 H))))
-        D))))
-            
+ (lambda (D S)
+   (remp not
+     (map (lambda (d)
+            (let ((d-l (lhs d))
+                  (d-r (rhs d)))
+              (let ((S0 (unify-safe d-l d-r S)))
+                (let ((pfx (prefix-S S0 S)))
+                  (cond
+                    ((null? pfx) '())
+                    (else pfx))))))
+          D))))
+
 (define anyvar?
-  (lambda (u H)
+  (lambda (u S)
     (case-value u
-      ((u) (var? (walk u H)))
-      ((au du) (or (anyvar? au H)
-                   (anyvar? du H)))
+      ((u) (var? (walk u S)))
+      ((au du) (or (anyvar? au S)
+                   (anyvar? du S)))
       ((u) #f))))
 
-(define drop-from-D-using-T
-  (lambda (H Y N A T D)
+(define drop-from-D-using-A
+  (lambda (S Y N Np A D)
     (remp (lambda (d)
 	    (exists
-	      (T-superfluous-pr? H Y N A T)
+	      (A-superfluous-pr? S Y N Np A)
 	      d))
 	  D)))
- 
-(define T-superfluous-pr?
-  (lambda (H Y N A T)
+
+(define A-superfluous-pr?
+  (lambda (S Y N Np A)
     (lambda (pr)
-      (let ((pr-a (walk (lhs pr) H))
-            (pr-d (walk (rhs pr) H)))
+      (let ((pr-a (walk (lhs pr) S))
+            (pr-d (walk (rhs pr) S)))
         (cond
           ((exists
-             (lambda (t)
-               (let ((t-a (walk (lhs t) H))
-                     (t-d (walk (rhs t) H)))
+             (lambda (a)
+               (let ((a-a (walk (lhs a) S))
+                     (a-d (walk (rhs a) S)))
                  (terms-pairwise=?
-                   pr-a pr-d t-a t-d H)))
-             T)
+                   pr-a pr-d a-a a-d S)))
+             A)
            (for-all
-             (stays-in-T? H Y N A pr-a pr-d)
-             T))
+             (stays-in-A? S Y N Np pr-a pr-d)
+             A))
           (else #f))))))
 
-(define stays-in-T?
-  (lambda (H Y N A pr-a pr-d)
-    (lambda (t)
-      (let ((t-a (walk (lhs t) H))
-            (t-d (walk (rhs t) H)))
+(define stays-in-A?
+  (lambda (S Y N Np pr-a pr-d)
+    (lambda (a)
+      (let ((a-a (walk (lhs a) S))
+            (a-d (walk (rhs a) S)))
         (or
           (not
             (terms-pairwise=?
-              pr-a pr-d t-a t-d H))
-          (untyped-var? H Y N A t-d)
-          (pair? t-d))))))
-     
+              pr-a pr-d a-a a-d S))
+          (untyped-var? S Y N Np a-d)
+          (pair? a-d))))))
+
 (define terms-pairwise=?
-  (lambda (pr-a pr-d t-a t-d H)
-    (or (and (term=? pr-a t-a H)
-             (term=? pr-d t-a H))
-        (and (term=? pr-a t-d H)
-             (term=? pr-d t-a H)))))            
+  (lambda (pr-a pr-d t-a t-d S)
+    (or (and (term=? pr-a t-a S)
+             (term=? pr-d t-d S))
+        (and (term=? pr-a t-d S)
+             (term=? pr-d t-a S)))))
 
 (define D-subsumed
   (lambda (D)
@@ -376,7 +379,7 @@
          (D-subsumed (cdr D) D0))
         (else (D-subsumed (cdr D)
                 (cons (car D) D0)))))))
- 
+
 (define D-subsumed?
   (lambda (d D0)
     (cond
@@ -385,46 +388,46 @@
        (let ((d^ (unify* (car D0) d)))
          (or (and d^ (eq? d^ d))
              (D-subsumed? d (cdr D0))))))))
- 
+
 (define unify*
-  (lambda (d H)
-    (unify (map lhs d) (map rhs d) H)))
- 
+  (lambda (d S)
+    (unify (map lhs d) (map rhs d) S)))
+
 (define unify*-safe
-  (lambda (d H)
+  (lambda (d S)
     (unify-safe
       (map lhs d)
       (map rhs d)
-      H)))
+      S)))
 
-(define T-subsumed
-  (lambda (T)
-    (let T-subsumed ((T T) (T0 '()))
+(define A-subsumed
+  (lambda (A)
+    (let A-subsumed ((A A) (A0 '()))
       (cond
-        ((null? T) T0)
+        ((null? A) A0)
         (else
-         (let ((l (lhs (car T)))
-               (r (rhs (car T))))
+         (let ((l (lhs (car A)))
+               (r (rhs (car A))))
            (cond
              ((or
-                (T-subsumed? l r (cdr T))
-                (T-subsumed? l r T0))
-              (T-subsumed (cdr T) T0))
+                (A-subsumed? l r (cdr A))
+                (A-subsumed? l r A0))
+              (A-subsumed (cdr A) A0))
              (else
-              (T-subsumed (cdr T)
-                (cons (car T) T0))))))))))
- 
-(define T-subsumed? 
-  (lambda (l r T)
+              (A-subsumed (cdr A)
+                (cons (car A) A0))))))))))
+
+(define A-subsumed?
+  (lambda (l r A)
     (cond
-      ((null? T) #f)
+      ((null? A) #f)
       (else
-       (let ((l^ (lhs (car T)))
-             (r^ (rhs (car T))))
+       (let ((l^ (lhs (car A)))
+             (r^ (rhs (car A))))
          (or
            (and (eq? r r^) (member* l^ l))
-           (T-subsumed? l r (cdr T))))))))
- 
+           (A-subsumed? l r (cdr A))))))))
+
 (define member*
   (lambda (x u)
     (cond
@@ -432,22 +435,22 @@
       ((pair? u)
        (or (member* x (car u))
            (member* x (cdr u))))
-      (else #f))))    
+      (else #f))))
 
 (define-syntax lambdag@
   (syntax-rules (:)
     ((_ (c) e) (lambda (c) e))
-    ((_ (c : H D Y N A T) e)
+    ((_ (c : S D Y N Np A) e)
      (lambda (c)
-       (let ((H (c->H c)) (D (c->D c))
+       (let ((S (c->S c)) (D (c->D c))
              (Y (c->Y c)) (N (c->N c))
-             (A (c->A c)) (T (c->T c)))
+             (Np (c->Np c)) (A (c->A c)))
          e)))))
-          
+
 (define-syntax lambdaf@
   (syntax-rules ()
     ((_ () e) (lambda () e))))
- 
+
 (define mzero (lambda () #f))
 (define unit (lambdag@ (c) c))
 (define choice (lambda (c f) (cons c f)))
@@ -455,12 +458,14 @@
   (syntax-rules ()
     ((_ e) (lambdaf@ () e))))
 (define empty-f (lambdaf@ () (mzero)))
+
 (define State
-  (lambda (H D Y N A T)
-    `(,H ,D ,Y ,N ,A ,T)))
+  (lambda (S D Y N Np A)
+    `(,S ,D ,Y ,N ,Np ,A)))
+
 (define empty-c '(() () () () () ()))
-         
-          
+
+
 (define-syntax case-inf
   (syntax-rules ()
     ((_ e (() e0) ((f^) e1) ((c^) e2) ((c f) e3))
@@ -471,9 +476,9 @@
          ((not (and (pair? c-inf)
                  (procedure? (cdr c-inf))))
           (let ((c^ c-inf)) e2))
-         (else (let ((c (car c-inf)) (f (cdr c-inf))) 
+         (else (let ((c (car c-inf)) (f (cdr c-inf)))
                  e3)))))))
- 
+
 (define-syntax fresh
   (syntax-rules ()
     ((_ (x ...) g0 g ...)
@@ -481,14 +486,14 @@
        (inc
          (let ((x (var 'x)) ...)
            (bind* (g0 c) g ...)))))))
- 
+
 (define bind
   (lambda (c-inf g)
     (case-inf c-inf
       (() (mzero))
       ((f) (inc (bind (f) g)))
       ((c) (g c))
-      ((c f) (mplus (g c) (lambdaf@ () (bind (f) g)))))))                 
+      ((c f) (mplus (g c) (lambdaf@ () (bind (f) g)))))))
 
 (define-syntax run
   (syntax-rules ()
@@ -500,38 +505,38 @@
               (let ((z ((reify x) final-c)))
                 (choice z empty-f))))
           empty-c))))))
- 
+
 (define-syntax run*
   (syntax-rules ()
     ((_ (x) g ...) (run #f (x) g ...))))
- 
+
 (define take
   (lambda (n f)
     (cond
       ((and n (zero? n)) '())
       (else
-       (case-inf (f) 
+       (case-inf (f)
          (() '())
          ((f) (take n f))
          ((c) (cons c '()))
          ((c f) (cons c
                   (take (and n (- n 1)) f))))))))
- 
+
 (define-syntax conde
   (syntax-rules ()
     ((_ (g0 g ...) (g1 g^ ...) ...)
-     (lambdag@ (c) 
-       (inc 
-         (mplus* 
+     (lambdag@ (c)
+       (inc
+         (mplus*
            (bind* (g0 c) g ...)
            (bind* (g1 c) g^ ...) ...))))))
- 
+
 (define-syntax mplus*
   (syntax-rules ()
     ((_ e) e)
-    ((_ e0 e ...) (mplus e0 
+    ((_ e0 e ...) (mplus e0
                     (lambdaf@ () (mplus* e ...))))))
- 
+
 (define mplus
   (lambda (c-inf f)
     (case-inf c-inf
@@ -539,49 +544,49 @@
       ((f^) (inc (mplus (f) f^)))
       ((c) (choice c f))
       ((c f^) (choice c (lambdaf@ () (mplus (f) f^)))))))
- 
+
 (define-syntax bind*
   (syntax-rules ()
     ((_ e) e)
-    ((_ e g0 g ...) (bind* (bind e g0) g ...))))          
+    ((_ e g0 g ...) (bind* (bind e g0) g ...))))
 
-(define c->H (lambda (c) (car c)))
+(define c->S (lambda (c) (car c)))
 (define c->D (lambda (c) (cadr c)))
 (define c->Y (lambda (c) (caddr c)))
 (define c->N (lambda (c) (cadddr c)))
-(define c->A (lambda (c) (cadddr (cdr c))))
-(define c->T (lambda (c) (cadddr (cddr c))))
- 
+(define c->Np (lambda (c) (cadddr (cdr c))))
+(define c->A (lambda (c) (cadddr (cddr c))))
+
 (define absento
   (lambda (u v)
-    (lambdag@ (c : H D Y N A T)
+    (lambdag@ (c : S D Y N Np A)
       (cond
-        ((mem-check u v H) (mzero))
+        ((mem-check u v S) (mzero))
         (else
-         (unit (State H D Y N A `((,u . ,v) . ,T))))))))
- 
+         (unit (State S D Y N Np `((,u . ,v) . ,A))))))))
+
 (define mem-check
-  (lambda (u t H)
-    (let ((t (walk t H)))
+  (lambda (u t S)
+    (let ((t (walk t S)))
       (cond
         ((pair? t)
-         (or (term=? u t H)
-             (mem-check u (car t) H)
-             (mem-check u (cdr t) H)))
-        (else (term=? u t H))))))
+         (or (term=? u t S)
+             (mem-check u (car t) S)
+             (mem-check u (cdr t) S)))
+        (else (term=? u t S))))))
 
 (define term=?
-  (lambda (u v H)
-    (let ((u (walk u H))
-          (v (walk v H)))
+  (lambda (u v S)
+    (let ((u (walk u S))
+          (v (walk v S)))
       (cond
         ((and (pair? u) (pair? v))
-         (and (term=? (car u) (car v) H)
-              (term=? (cdr u) (cdr v) H)))
-        (else (term=?-nonpair u v H))))))
+         (and (term=? (car u) (car v) S)
+              (term=? (cdr u) (cdr v) S)))
+        (else (term=?-nonpair u v S))))))
 
 (define term=?-nonpair
-  (lambda (u v H)
+  (lambda (u v S)
     (cond
       ((eq? u v) #t)
       ((var? u) #f)
@@ -591,15 +596,15 @@
 
 (define ground-non-type?
   (lambda (pred)
-    (lambda (u H)
-      (let ((u (walk u H)))
+    (lambda (u S)
+      (let ((u (walk u S)))
         (cond
           ((var? u) #f)
           (else (not (pred u))))))))
-     
+
 (define ground-non-symbol?
-  (ground-non-type? symbol?))      
- 
+  (ground-non-type? symbol?))
+
 (define ground-non-number?
   (ground-non-type? number?))
 
@@ -607,141 +612,141 @@
 
 (define ground-pair?
   (ground-non-type? not-pair?))
- 
+
 (define symbolo
   (lambda (u)
-    (lambdag@ (c : H D Y N A T)
+    (lambdag@ (c : S D Y N Np A)
       (cond
-        ((ground-non-symbol? u H) (mzero))
-        ((mem-check u N H) (mzero))
-        (else (unit (State H D `(,u . ,Y) N A T)))))))
- 
-(define numbero 
+        ((ground-non-symbol? u S) (mzero))
+        ((mem-check u N S) (mzero))
+        (else (unit (State S D `(,u . ,Y) N Np A)))))))
+
+(define numbero
   (lambda (u)
-    (lambdag@ (c : H D Y N A T)
+    (lambdag@ (c : S D Y N Np A)
       (cond
-        ((ground-non-number? u H) (mzero))
-        ((mem-check u Y H) (mzero))
-        (else (unit (State H D Y `(,u . ,N) A T)))))))
+        ((ground-non-number? u S) (mzero))
+        ((mem-check u Y S) (mzero))
+        (else (unit (State S D Y `(,u . ,N) Np A)))))))
 
 (define not-pairo
   (lambda (u)
-    (lambdag@ (c : H D Y N A T)
+    (lambdag@ (c : S D Y N Np A)
       (cond
-        ((ground-pair? u H) (mzero))
-        (else (unit (State H D Y N `(,u . ,A) T)))))))
+        ((ground-pair? u S) (mzero))
+        (else (unit (State S D Y N `(,u . ,Np) A)))))))
 
 (define =/=
   (lambda (u v)
-    (lambdag@ (c : H D Y N A T)
+    (lambdag@ (c : S D Y N Np A)
       (cond
-        ((unify u v H) =>
-         (lambda (H0)
+        ((unify u v S) =>
+         (lambda (S0)
            (cond
-             ((eq? H0 H) (mzero))
+             ((eq? S0 S) (mzero))
              (else
               (let ((d `(,u . ,v)))
                 (unit
-                  (State H `(,d . ,D) Y N A T)))))))
-        (else c)))))    
- 
+                  (State S `(,d . ,D) Y N Np A)))))))
+        (else c)))))
+
 (define ==
   (lambda (u v)
-    (lambdag@ (c : H D Y N A T)
+    (lambdag@ (c : S D Y N Np A)
       (cond
-        ((unify u v H) =>
-         (lambda (H0)
+        ((unify u v S) =>
+         (lambda (S0)
            (cond
-             ((eq? H0 H) (unit c))
+             ((eq? S0 S) (unit c))
              (else
               (cond
-                ((==fail-check H0 D Y N A T)
+                ((==fail-check S0 D Y N Np A)
                  (mzero))
                 (else
-                 (unit (State H0 D Y N A T))))))))
+                 (unit (State S0 D Y N Np A))))))))
         (else (mzero))))))
- 
+
 (define ==fail-check
-  (lambda (H0 D Y N A T)  
-    (or (atomic-fail-check H0 Y ground-non-symbol?)
-        (atomic-fail-check H0 N ground-non-number?)
-        (atomic-fail-check H0 A ground-pair?)        
-        (symbolo-numbero-fail-check H0 Y N)
-        (=/=-fail-check H0 D)
-        (absento-fail-check H0 T))))
+  (lambda (S0 D Y N Np A)
+    (or (atomic-fail-check S0 Y ground-non-symbol?)
+        (atomic-fail-check S0 N ground-non-number?)
+        (atomic-fail-check S0 Np ground-pair?)
+        (symbolo-numbero-fail-check S0 Y N)
+        (=/=-fail-check S0 D)
+        (absento-fail-check S0 A))))
 
 (define atomic-fail-check
-  (lambda (H A pred)
+  (lambda (S Np pred)
     (exists
-      (lambda (a)
-        (pred (walk a H) H))
-      A)))
- 
-(define symbolo-numbero-fail-check 
-  (lambda (H Y N)
-    (let ((N (map (lambda (n) (walk n H)) N)))    
+      (lambda (np)
+        (pred (walk np S) S))
+      Np)))
+
+(define symbolo-numbero-fail-check
+  (lambda (S Y N)
+    (let ((N (map (lambda (n) (walk n S)) N)))
       (exists
         (lambda (y)
-          (exists (same-var? (walk y H)) N))
+          (exists (same-var? (walk y S)) N))
         Y))))
- 
+
 (define absento-fail-check
-  (lambda (H T)
+  (lambda (S A)
     (exists
-      (lambda (t) (mem-check (lhs t) (rhs t) H))
-      T)))
- 
+      (lambda (a) (mem-check (lhs a) (rhs a) S))
+      A)))
+
 (define =/=-fail-check
-  (lambda (H D)
+  (lambda (S D)
     (exists
-      (lambda (d) (term=? (lhs d) (rhs d) H))
+      (lambda (d) (term=? (lhs d) (rhs d) S))
       D)))
- 
+
 (define tagged?
-  (lambda (H Y y^)
-    (exists (lambda (y) (eqv? (walk y H) y^)) Y)))
- 
+  (lambda (S Y y^)
+    (exists (lambda (y) (eqv? (walk y S) y^)) Y)))
+
 (define untyped-var?
-  (lambda (H Y N A t)
+  (lambda (S Y N Np t)
     (let ((in-type? (lambda (y)
-                      (eq? (walk y H) t))))
+                      (eq? (walk y S) t))))
       (and (var? t)
            (not (exists in-type? Y))
            (not (exists in-type? N))
-           (not (exists in-type? A))))))
- 
+           (not (exists in-type? Np))))))
+
 (define const?
-  (lambda (H)
+  (lambda (S)
     (lambda (a)
-      (not (var? (walk a H))))))
- 
+      (not (var? (walk a S))))))
+
 (define drop-from-N-b/c-const
-  (lambdag@ (c : H D Y N A T)
+  (lambdag@ (c : S D Y N Np A)
     (cond
-      ((find (const? H) N) =>
+      ((find (const? S) N) =>
        (lambda (n)
-         (State H D Y (remq1 n N) A T)))
-      (else c))))
- 
-(define drop-from-Y-b/c-const
-  (lambdag@ (c : H D Y N A T)
-    (cond
-      ((find (const? H) Y) =>
-       (lambda (y)
-         (State H D (remq1 y Y) N A T)))
+         (State S D Y (remq1 n N) Np A)))
       (else c))))
 
-(define drop-from-A-b/c-const
-  (lambdag@ (c : H D Y N A T)
+(define drop-from-Y-b/c-const
+  (lambdag@ (c : S D Y N Np A)
     (cond
-      ((find (const? H) A) =>
-       (lambda (a)
-         (State H D Y N (remq1 a A) T)))
-      ((memp (lambda (x) (not (walk x H))) A) =>
-       (lambda (a*)
-         (State H D Y N (remq1 (car a*) A) T)))
+      ((find (const? S) Y) =>
+       (lambda (y)
+         (State S D (remq1 y Y) N Np A)))
       (else c))))
- 
+
+(define drop-from-Np-b/c-const
+  (lambdag@ (c : S D Y N Np A)
+    (cond
+      ((find (const? S) Np) =>
+       (lambda (np)
+         (State S D Y N (remq1 np Np) A)))
+      ((memp (lambda (x) (not (walk x S))) Np) =>
+       (lambda (np*)
+         (State S D Y N (remq1 (car np*) Np) A)))
+      (else c))))
+
 (define remq1
   (lambda (elem ls)
     (cond
@@ -749,252 +754,252 @@
       ((eq? (car ls) elem) (cdr ls))
       (else (cons (car ls)
               (remq1 elem (cdr ls)))))))
- 
+
 (define same-var?
   (lambda (v)
     (lambda (v^)
       (and (var? v) (var? v^) (eq? v v^)))))
- 
+
 (define find-dup
-  (lambda (f H)
+  (lambda (f S)
     (lambda (set)
       (let loop ((set set))
         (cond
           ((null? set) #f)
           (else
            (let ((e (car set)))
-             (let ((e0 (walk e H)))
+             (let ((e0 (walk e S)))
                (cond
                  ((find (lambda (e1)
-                          ((f e0) (walk e1 H)))
+                          ((f e0) (walk e1 S)))
                     (cdr set))
                   e)
                  (else
                   (loop (cdr set))))))))))))
 
 (define drop-from-N-b/c-dup-var
-  (lambdag@ (c : H D Y N A T)
+  (lambdag@ (c : S D Y N Np A)
     (cond
-      (((find-dup same-var? H) N) =>
+      (((find-dup same-var? S) N) =>
        (lambda (n)
-         (State H D Y (remq1 n N) A T)))
+         (State S D Y (remq1 n N) Np A)))
       (else c))))
- 
+
 (define drop-from-Y-b/c-dup-var
-  (lambdag@ (c : H D Y N A T)
+  (lambdag@ (c : S D Y N Np A)
     (cond
-      (((find-dup same-var? H) Y) =>
+      (((find-dup same-var? S) Y) =>
        (lambda (y)
-         (State H D (remq1 y Y) N A T)))
+         (State S D (remq1 y Y) N Np A)))
       (else c))))
 
-(define drop-from-A-b/c-dup-var
-  (lambdag@ (c : H D Y N A T)
+(define drop-from-Np-b/c-dup-var
+  (lambdag@ (c : S D Y N Np A)
     (cond
-      (((find-dup same-var? H) A) =>
-       (lambda (a)
-         (State H D Y N (remq1 a A) T)))
+      (((find-dup same-var? S) Np) =>
+       (lambda (np)
+         (State S D Y N (remq1 np Np) A)))
       (else c))))
 
-(define drop-var-from-A-b/c-Y
-  (lambdag@ (c : H D Y N A T)
-    (let ((Y (map (lambda (y) (walk y H)) Y)))
+(define drop-var-from-Np-b/c-Y
+  (lambdag@ (c : S D Y N Np A)
+    (let ((Y (map (lambda (y) (walk y S)) Y)))
       (cond
-        ((find (lambda (a)
-                 (exists (same-var? (walk a H)) Y))
-               A) =>
-               (lambda (a)
-                 (State H D Y N (remq1 a A) T)))
+        ((find (lambda (np)
+                 (exists (same-var? (walk np S)) Y))
+               Np) =>
+               (lambda (np)
+                 (State S D Y N (remq1 np Np) A)))
         (else c)))))
 
-(define drop-var-from-A-b/c-N
-  (lambdag@ (c : H D Y N A T)
-    (let ((N (map (lambda (n) (walk n H)) N)))
+(define drop-var-from-Np-b/c-N
+  (lambdag@ (c : S D Y N Np A)
+    (let ((N (map (lambda (n) (walk n S)) N)))
       (cond
-        ((find (lambda (a)
-                 (exists (same-var? (walk a H)) N))
-               A) =>
-               (lambda (a)
-                 (State H D Y N (remq1 a A) T)))
+        ((find (lambda (np)
+                 (exists (same-var? (walk np S)) N))
+               Np) =>
+               (lambda (np)
+                 (State S D Y N (remq1 np Np) A)))
         (else c)))))
 
 (define var-type-mismatch?
-  (lambda (H Y N A t1 t2)
+  (lambda (S Y N Np t1 t2)
     (cond
-      ((num? H N t1)
-       (not (num? H N t2)))
-      ((sym? H Y t1)
-       (not (sym? H Y t2)))
-      ((not-pr? H A t1)
+      ((num? S N t1)
+       (not (num? S N t2)))
+      ((sym? S Y t1)
+       (not (sym? S Y t2)))
+      ((not-pr? S Np t1)
        (not (not (pair? t2))))
       (else #f))))
- 
+
 (define term-ununifiable?
-  (lambda (H Y N A t1 t2)
-    (let ((t1 (walk t1 H))
-          (t2 (walk t2 H)))
+  (lambda (S Y N Np t1 t2)
+    (let ((t1 (walk t1 S))
+          (t2 (walk t2 S)))
       (cond
-        ((or (untyped-var? H Y N A t1)
-             (untyped-var? H Y N A t2)) #f)
+        ((or (untyped-var? S Y N Np t1)
+             (untyped-var? S Y N Np t2)) #f)
         ((var? t1)
-         (var-type-mismatch? H Y N A t1 t2))
+         (var-type-mismatch? S Y N Np t1 t2))
         ((var? t2)
-         (var-type-mismatch? H Y N A t2 t1))
+         (var-type-mismatch? S Y N Np t2 t1))
         ((and (pair? t1) (pair? t2))
-         (or (term-ununifiable? H Y N A
+         (or (term-ununifiable? S Y N Np
                (car t1) (car t2))
-             (term-ununifiable? H Y N A
+             (term-ununifiable? S Y N Np
                (cdr t1) (cdr t2))))
-        (else (not (eqv? t1 t2)))))))  
-    
+        (else (not (eqv? t1 t2)))))))
+
 (define num?
-  (lambda (H N n)
-    (let ((n (walk n H)))
+  (lambda (S N n)
+    (let ((n (walk n S)))
       (cond
-        ((var? n) (tagged? H N n))
+        ((var? n) (tagged? S N n))
         (else (number? n))))))
-     
+
 (define sym?
-  (lambda (H Y y)
-    (let ((y (walk y H)))          
+  (lambda (S Y y)
+    (let ((y (walk y S)))
       (cond
-        ((var? y) (tagged? H Y y))
+        ((var? y) (tagged? S Y y))
         (else (symbol? y))))))
 
 (define not-pr?
-  (lambda (H A a)
-    (let ((a (walk a H)))          
+  (lambda (S Np np)
+    (let ((np (walk np S)))
       (cond
-        ((var? a) (tagged? H A a))
-        (else (not-pair? a))))))
-          
+        ((var? np) (tagged? S Np np))
+        (else (not-pair? np))))))
+
 (define drop-from-D-b/c-d1-occurs-d2
-  (lambdag@ (c : H D Y N A T)
+  (lambdag@ (c : S D Y N Np A)
     (cond
       ((find (lambda (d)
-               (tree-occurs-check (lhs d) (rhs d) H))
+               (tree-occurs-check (lhs d) (rhs d) S))
          D) => (lambda (d)
-                 (State H (remq1 d D) Y N A T)))
-      (else c))))          
-
-(define split-t-move-to-D-b/c-pair
-  (lambdag@ (c : H D Y N A T)
+                 (State S (remq1 d D) Y N Np A)))
+      (else c))))
+;; here
+(define split-a-move-to-D-b/c-pair
+  (lambdag@ (c : S D Y N Np A)
     (cond
       ((exists
-         (lambda (t)
-           (let ((tr (walk (rhs t) H)))
+         (lambda (a)
+           (let ((tr (walk (rhs a) S)))
              (cond
                ((pair? tr)
-                ((split-t-move-to-D tr t) c))
+                ((split-a-move-to-D tr a) c))
                (else #f))))
-         T))
+         A))
       (else c))))
- 
-(define split-t-move-to-D
-  (lambda (tr t)
-    (lambdag@ (c : H D Y N A T)
-      (let ((tl (lhs t))
+
+(define split-a-move-to-D
+  (lambda (tr a)
+    (lambdag@ (c : S D Y N Np A)
+      (let ((tl (walk (lhs a) S))
             (tr-a (car tr))
             (tr-d (cdr tr)))
         (let ((t1 `(,tl . ,tr-a))
               (t2 `(,tl . ,tr-d))
-              (T (remq1 t T)))
-          (let ((T `(,t1 . (,t2 . ,T))))
+              (A (remq1 a A)))
+          (let ((A `(,t1 . (,t2 . ,A))))
             (cond
-              ((unify tl tr H) =>
-               (lambda (H0)
+              ((unify tl tr S) =>
+               (lambda (S0)
                  (cond
-                   ((eq? H0 H)
-                    (State H D Y N A T))
+                   ((eq? S0 S)
+                    (State S D Y N Np A))
                    (else
-                     (let ((D `(,t . ,D)))
-                       (State H D Y N A T))))))
-              (else (State H D Y N A T))))))))) 
- 
+                     (let ((D `(,a . ,D)))
+                       (State S D Y N Np A))))))
+              (else (State S D Y N Np A)))))))))
+
 (define tree-occurs-check
-  (lambda (d-a d-b H)
-    (let ((d-a (walk d-a H))
-          (d-b (walk d-b H)))
+  (lambda (d-a d-b S)
+    (let ((d-a (walk d-a S))
+          (d-b (walk d-b S)))
       (cond
         ((var? d-a)
-         (occurs-check d-a d-b H))
+         (occurs-check d-a d-b S))
         ((var? d-b)
-         (occurs-check d-b d-a H))
+         (occurs-check d-b d-a S))
         ((and (pair? d-a) (pair? d-b))
          (or
-           (tree-occurs-check (car d-a) (car d-b) H)
-           (tree-occurs-check (cdr d-a) (cdr d-b) H)))
+           (tree-occurs-check (car d-a) (car d-b) S)
+           (tree-occurs-check (cdr d-a) (cdr d-b) S)))
         (else #f)))))
 
-(define move-from-T-to-D-b/c-t2-A
-  (lambdag@ (c : H D Y N A T)
+(define move-from-A-to-D-b/c-a2-Np
+  (lambdag@ (c : S D Y N Np A)
     (cond
       ((exists
-         (lambda (t)
-           (let ((t2 (rhs t)))
-             ((movable-t? (walk t2 H) t2 t) c)))
-         T))
+         (lambda (a)
+           (let ((a2 (rhs a)))
+             ((movable-a? (walk a2 S) a2 a) c)))
+         A))
       (else c))))
- 
-(define movable-t?
-  (lambda (t2^ t2 t)
-    (lambdag@ (c : H D Y N A T)
+
+(define movable-a?
+  (lambda (a2^ a2 a)
+    (lambdag@ (c : S D Y N Np A)
       (cond
         ((and
-           (not (untyped-var? H Y N A t2^))
-           (not (pair? t2^)))
-           (let ((T (remq1 t T)))
+           (not (untyped-var? S Y N Np a2^))
+           (not (pair? a2^)))
+           (let ((A (remq1 a A)))
              (cond
-               ((unify (lhs t) t2 H) =>
-                (lambda (H0)
+               ((unify (lhs a) a2 S) =>
+                (lambda (S0)
                   (cond
-                    ((eq? H0 H)
-                     (State H D Y N A T))
+                    ((eq? S0 S)
+                     (State S D Y N Np A))
                     (else
-                     (let ((D `(,t . ,D)))
-                       (State H D Y N A T))))))
-               (else (State H D Y N A T)))))
+                     (let ((D `(,a . ,D)))
+                       (State S D Y N Np A))))))
+               (else (State S D Y N Np A)))))
         (else #f)))))
- 
-(define drop-from-D-b/c-Y-or-N-or-A
-  (lambdag@ (c : H D Y N A T)
+
+(define drop-from-D-b/c-Y-or-N-or-Np
+  (lambdag@ (c : S D Y N Np A)
     (cond
       ((find (lambda (d)
-               (term-ununifiable? 
-                 H Y N A (lhs d) (rhs d)))
+               (term-ununifiable?
+                 S Y N Np (lhs d) (rhs d)))
         D) =>
        (lambda (d)
-         (State H (remq1 d D) Y N A T)))
-      (else c))))         
-         
-(define drop-from-T-b/c-t2-occurs-t1
-  (lambdag@ (c : H D Y N A T)
+         (State S (remq1 d D) Y N Np A)))
+      (else c))))
+
+(define drop-from-A-b/c-a2-occurs-a1
+  (lambdag@ (c : S D Y N Np A)
     (cond
-      ((find (lambda (t)
-               (let ((t-a (walk (lhs t) H))
-                     (t-d (walk (rhs t) H)))
-                 (mem-check t-d t-a H)))
-         T)
-       => (lambda (t)
-            (State H D Y N A (remq1 t T))))
-      (else c))))         
- 
+      ((find (lambda (a)
+               (let ((a-a (walk (lhs a) S))
+                     (a-d (walk (rhs a) S)))
+                 (mem-check a-d a-a S)))
+         A)
+       => (lambda (a)
+            (State S D Y N Np (remq1 a A))))
+      (else c))))
+
 (define LOF
   (list drop-from-Y-b/c-const
         drop-from-N-b/c-const
-        drop-from-A-b/c-const
-        drop-var-from-A-b/c-Y
-        drop-var-from-A-b/c-N
+        drop-from-Np-b/c-const
+        drop-var-from-Np-b/c-Y
+        drop-var-from-Np-b/c-N
         drop-from-Y-b/c-dup-var
         drop-from-N-b/c-dup-var
-        drop-from-A-b/c-dup-var
-        drop-from-D-b/c-Y-or-N-or-A
-        drop-from-T-b/c-t2-occurs-t1
-        move-from-T-to-D-b/c-t2-A
-        split-t-move-to-D-b/c-pair))
- 
-(define len-LOF (length LOF))       
- 
+        drop-from-Np-b/c-dup-var
+        drop-from-D-b/c-Y-or-N-or-Np
+        drop-from-A-b/c-a2-occurs-a1
+        move-from-A-to-D-b/c-a2-Np
+        split-a-move-to-D-b/c-pair))
+
+(define len-LOF (length LOF))
+
 (define cycler
   (lambda (c n fns)
     (cond
@@ -1003,11 +1008,11 @@
       (else
        (let ((c^ ((car fns) c)))
          (cond
-           ((not (eq? c^ c))             
+           ((not (eq? c^ c))
             (cycler c^ len-LOF (cdr fns)))
            (else
             (cycler c (sub1 n) (cdr fns)))))))))
-               
+
 (define cycle
   (lambdag@ (c)
     (cycler c len-LOF LOF)))
@@ -1019,7 +1024,7 @@
        (inc
          (ifa ((g0 c) g ...)
               ((g1 c) g^ ...) ...))))))
- 
+
 (define-syntax ifa
   (syntax-rules ()
     ((_) (mzero))
@@ -1038,7 +1043,7 @@
        (inc
          (ifu ((g0 c) g ...)
               ((g1 c) g^ ...) ...))))))
- 
+
 (define-syntax ifu
   (syntax-rules ()
     ((_) (mzero))
@@ -1057,8 +1062,8 @@
 (define-syntax project
   (syntax-rules ()
     ((_ (x ...) g g* ...)
-     (lambdag@ (c : H D Y N A T)
-       (let ((x (walk* x H)) ...)
+     (lambdag@ (c : S D Y N Np A)
+       (let ((x (walk* x S)) ...)
          ((fresh () g g* ...) c))))))
 
 (define booleano
@@ -1066,7 +1071,7 @@
     (conde
       ((== #f x) succeed)
       ((== #t x) succeed))))
-         
+
 (define onceo
   (lambda (g)
     (condu
@@ -1075,7 +1080,7 @@
 (define prt
   (lambda args
     (lambdag@ (c)
-      (begin           
+      (begin
         (for-each
           (lambda (msg)
             (printf "~s~n" msg))
