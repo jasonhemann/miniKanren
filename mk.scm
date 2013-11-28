@@ -465,7 +465,6 @@
 
 (define empty-c '(() () () () () ()))
 
-
 (define-syntax case-inf
   (syntax-rules ()
     ((_ e (() e0) ((f^) e1) ((c^) e2) ((c f) e3))
@@ -1011,7 +1010,7 @@
            ((not (eq? c^ c))
             (cycler c^ len-LOF (cdr fns)))
            (else
-            (cycler c (sub1 n) (cdr fns)))))))))
+            (cycler c (- n 1) (cdr fns)))))))))
 
 (define cycle
   (lambdag@ (c)
@@ -1083,7 +1082,9 @@
       (begin
         (for-each
           (lambda (msg)
-            (printf "~s~n" msg))
+            (display msg)
+            (newline))
           args)
         (pretty-print c)
         c))))
+
